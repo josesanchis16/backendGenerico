@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-// const bcrypt = require('bcrypt');
+const bcrypt = require('bcrypt');
 // const jwt = require('jsonwebtoken');
 // const SECRET_AUTH_JWT = require('../config/password').SECRET_AUTH_JWT;
 // const {isEmail} = require('validator');
@@ -43,42 +43,50 @@ const userSchema = new mongoose.Schema({
     timestamps: true
 })
 
-// userSchema.pre('save', function (next) {
-//     const user = this;
-//     if (user.isModified('password')) {
-//         bcrypt.genSalt(user.password.length)
-//             .then(salt => bcrypt.hash(user.password, salt)
-//                 .then(hash => {
-//                     console.log(hash)
-//                     user.password = hash;
-//                     next();
-//                 }))
-//             .catch(error => res.status(500).send(error))
-//     } else {
-//         return next();
-//     }
-// });
+userSchema.pre('save', function (next) {
+    const user = this;
+    var passwordLength = 0;
+    if (user.isModified('password')) {
 
-userSchema.methods.toJSON = function () {
-    const {
-        _id,
-        name,
-        nick,
-        email,
-        confirmedEmail,
-        token,
-        avatar,
-    } = this;
-    return {
-        _id,
-        name,
-        nick,
-        email,
-        confirmedEmail,
-        avatar,
-        token
-    };
-}
+        if (user.password.length > 15) passwordLength = 15;
+        else passwordLength = user.password.length;
+
+        bcrypt.genSalt(passwordLength)
+            .then(salt => bcrypt.hash(user.password, salt)
+                .then(hash => {
+                    console.log(hash)
+                    user.password = hash;
+                    next();
+                }))
+            .catch(error => {
+                console.log(error);
+                res.status(500).redirect('/page-not-found');
+            })
+    } else {
+        return next();
+    }
+});
+
+// userSchema.methods.toJSON = function () {
+//     const {
+//         _id,
+//         name,
+//         nick,
+//         email,
+//         confirmedEmail,
+//         token,
+//         avatar,
+//     } = this;
+//     return {
+//         _id,
+//         name,
+//         nick,
+//         email,
+//         confirmedEmail,
+//         avatar,
+//         token
+//     };
+// }
 
 // userSchema.methods.generateAuthToken = function () {
 //     const user = this;
